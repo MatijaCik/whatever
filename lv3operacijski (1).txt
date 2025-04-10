@@ -1,0 +1,164 @@
+1.
+touch dat_info.sh
+
+nano dat_info.sh
+
+if [ -f "$1" ]; then
+    ls -l "$1"
+    cat "$1"      #ovo samo ispisuje sadržaj makar ne treba u zadatku
+else
+   echo "Datoteka ne postoji"
+fi
+chmod 755 dat_info.sh
+
+./dat_info.sh brojke.txt
+ispis:
+-rw-r-x--x 1 student13 stud 10 Mar 26 15:10 brojke.txt
+8
+12
+4
+22
+
+2.
+
+touch allowed_files.sh
+nano allowed_files.sh
+
+ls -l | awk '$1  ~ /r..r..r../ {print $9}'
+
+./allowed_files.sh
+
+allowed_files.sh
+bolesni_dominik
+dat_info.sh
+datVSdir.sh
+dir2_link
+logiran.sh
+neki_dir
+novi_dir
+students.sh
+users.txt
+usporedba_stringova.sh
+
+3.
+
+touch usporedba_stringova.sh
+nano usporedba_stringova.sh
+
+if [ ${#1} -gt ${#2} ]; then
+   echo "Veci string: $1, duljina: ${#1}"
+elif [ ${#1} -lt ${#2} ]; then
+   echo "Veci string $2, duljina: ${#2}"
+else
+   echo "Stringovi su jednake duljine: $1 ($#1) i $2 ($#2)"
+fi
+
+./usporedba_stringova.sh Matija Cikojević
+izlaz:
+Veci string Cikojević, duljina: 9
+
+4.
+touch datVSdir.sh
+
+chmod 755 datVSdir.sh
+
+nano datVSdir.sh
+
+if [ -z "$1" ]; then
+echo "Molimo unesite naziv datoteke ili direktorija."
+exit 1
+fi
+
+param=$1
+
+if [ -d "$param" ]; then
+echo "Datoteke koje počinju samoglasnikom i završavaju s '.txt':"
+for file in "$param"/*; do
+if [[ -f "$file" && $(basename "$file") =~ ^[aeiouAEIOU].*\.txt$ ]]; then
+echo $(basename "$file")
+fi
+done
+
+elif [ -f "$param" ]; then
+echo "Riječi koje sadrže broj u datoteci '$param':"
+grep -oE '\b\w*[0-9]+\w*\b' "$param"
+else
+echo "Pogrešan unos. Unesite datoteku ili direktorij."
+exit 1
+fi
+
+ ./datVSdir1.sh brojke.txt
+Riječi koje sadrže broj u datoteci 'brojke.txt':
+8
+12
+4
+22
+
+
+5.
+
+touch students.sh
+nano students.sh
+
+awk -F: '$1 ~ /^student(10|[1-4][0-9]|50)$/ {print $1, $3}' /etc/passwd > users.txt
+sed -i 's/student/user/g' users.txt
+
+
+chmod 755 students.sh
+
+./students.sh
+
+cat users.txt
+user32 11957
+user50 12239
+user10 13366
+user11 13367
+user12 13368
+user13 13369
+user14 13370
+user15 13371
+user16 13372
+user17 13373
+user18 13374
+user19 13375
+user20 13376
+user21 13377
+user22 13378
+user23 13379
+user24 13380
+user25 13381
+user26 13382
+user27 13383
+user28 13384
+user29 13385
+user30 13386
+user31 13387
+user33 13388
+user34 13389
+user35 13390
+user36 13391
+user37 13392
+user38 13393
+user39 13394
+user40 13395
+user41 13396
+user42 13397
+user43 13398
+user44 13399
+user45 13400
+user46 13401
+user47 13402
+user48 13403
+user49 13404
+
+
+
+
+
+
+
+
+
+
+
+
