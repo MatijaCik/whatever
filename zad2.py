@@ -1,18 +1,32 @@
-from tensorflow.keras.preprocessing import image
-import numpy as np
-from tensorflow import keras
 import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+from skimage.transform import resize
+from skimage import color
+from tensorflow.keras import models
+import numpy as np
 
-model = keras.models.load_model("best_model.h5")
-img = image.load_img("test.png", color_mode="grayscale", target_size=(28, 28))
-img_array = image.img_to_array(img)
-img_array = img_array.reshape(1, 28, 28, 1).astype("float32") / 255
+filename = 'test.png'
 
-prediction = model.predict(img_array)
+# Ucitaj sliku
+img_original = mpimg.imread('test.png')  # Zamijeni 'test.png' s putanjom do svoje slike
+img = color.rgb2gray(img_original)
+img = resize(img, (28, 28))
+
+# Prikazi sliku
+plt.imshow(img, cmap=plt.get_cmap('gray'))
+plt.axis('off')  
+plt.show()
+
+# Pripremi sliku - ulaz u mrezu
+img = img.reshape(1, 28, 28, 1)
+img = img.astype('float32')
+
+# TODO: ucitaj izgradenu mrezu
+model = models.load_model('best_model.h5')
+
+# TODO: napravi predikciju za ucitanu sliku pomocu mreze
+prediction = model.predict(img)
 predicted_class = np.argmax(prediction)
 
-#  prikaz
-plt.imshow(img_array[0].reshape(28, 28), cmap='gray')
-plt.title(f"Predikcija: {predicted_class}")
-plt.axis("off")
-plt.show()
+# TODO: ispis rezultat u terminal
+print(f'Predikcija: {predicted_class}')
