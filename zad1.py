@@ -1,22 +1,21 @@
+from tensorflow import keras
+from tensorflow.keras import layers, models, callbacks
+from tensorflow.keras.utils import to_categorical
+from sklearn.metrics import confusion_matrix, accuracy_score
 import numpy as np
 import matplotlib.pyplot as plt
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import seaborn as sns
 
-# 1. Učitavanje i priprema MNIST podataka
+# MNIST podatkovni skup
 (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
-x_train = x_train.reshape(-1, 28, 28, 1).astype("float32") / 255
-x_test = x_test.reshape(-1, 28, 28, 1).astype("float32") / 255
+x_train_s = x_train.reshape(-1, 28, 28, 1) / 255.0
+x_test_s = x_test.reshape(-1, 28, 28, 1) / 255.0
 
-# 2. One-hot enkodiranje labela
-y_train_cat = keras.utils.to_categorical(y_train, 10)
-y_test_cat = keras.utils.to_categorical(y_test, 10)
+y_train_s = to_categorical(y_train, num_classes=10)
+y_test_s = to_categorical(y_test, num_classes=10)
 
-# 3. Definicija CNN modela prema slici 8.1
-model = keras.Sequential([
+# TODO: strukturiraj konvolucijsku neuronsku mrezu
+model = models.Sequential([
     layers.Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 1)),
     layers.MaxPooling2D((2, 2)),
     layers.Conv2D(64, (3, 3), activation='relu'),
@@ -26,42 +25,45 @@ model = keras.Sequential([
     layers.Dense(10, activation='softmax')
 ])
 
+# TODO: definiraj karakteristike procesa ucenja pomocu .compile()
 model.compile(optimizer='adam',
               loss='categorical_crossentropy',
               metrics=['accuracy'])
 
-# 4. Callback-ovi: TensorBoard i ModelCheckpoint
-callbacks = [
-    keras.callbacks.TensorBoard(log_dir='logs', update_freq=100),
-    keras.callbacks.ModelCheckpoint('best_model.h5', save_best_only=True,
-                                    monitor='val_accuracy', mode='max')
+# TODO: definiraj callbacks
+my_callbacks = [
+    callbacks.TensorBoard(log_dir='logs', update_freq=100),
+    callbacks.ModelCheckpoint(filepath='best_model.h5',
+                              monitor='val_accuracy',
+                              mode='max',
+                              save_best_only=True)
 ]
 
-# 5. Treniranje modela
-history = model.fit(x_train, y_train_cat,
-                    epochs=10,
-                    batch_size=64,
-                    validation_split=0.1,
-                    callbacks=callbacks)
+# TODO: provedi treniranje mreze pomocu .fit()
+model.fit(x_train_s, y_train_s,
+          epochs=10,
+          batch_size=64,
+          validation_split=0.1,
+          callbacks=my_callbacks)
 
-# 6. Učitavanje najboljeg modela i evaluacija
-best_model = keras.models.load_model("best_model.h5")
-train_loss, train_acc = best_model.evaluate(x_train, y_train_cat, verbose=0)
-test_loss, test_acc = best_model.evaluate(x_test, y_test_cat, verbose=0)
-print(f"Točnost na skupu za učenje: {train_acc:.4f}")
-print(f"Točnost na testnom skupu: {test_acc:.4f}")
+#TODO: Ucitaj najbolji model
+best_model = keras.models.load_model('best_model.h5')
 
-# 7. Matrice zabune
-y_pred_train = np.argmax(best_model.predict(x_train), axis=1)
-y_pred_test = np.argmax(best_model.predict(x_test), axis=1)
+# TODO: Izracunajte tocnost mreze na skupu podataka za ucenje i skupu podataka za testiranje
+train_loss, train_acc = best_model.evaluate(x_train_s, y_train_s, verbose=0)
+test_loss, test_acc = best_model.evaluate(x_test_s, y_test_s, verbose=0)
+print(f'Točnost na skupu za učenje: {train_acc:.4f}')
+print(f'Točnost na testnom skupu: {test_acc:.4f}')
 
-cm_train = confusion_matrix(y_train, y_pred_train)
-cm_test = confusion_matrix(y_test, y_pred_test)
+# TODO: Prikazite matricu zabune na skupu podataka za testiranje
+y_pred = best_model.predict(x_test_s)
+y_pred_classes = np.argmax(y_pred, axis=1)
+y_true = np.argmax(y_test_s, axis=1)
 
-ConfusionMatrixDisplay(cm_train).plot()
-plt.title("Matrica zabune - Skup za učenje")
-plt.show()
-
-ConfusionMatrixDisplay(cm_test).plot()
-plt.title("Matrica zabune - Testni skup")
+cm = confusion_matrix(y_true, y_pred_classes)
+plt.figure(figsize=(10, 8))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+plt.title('Matrica zabune - Testni skup')
+plt.xlabel('Predviđeno')
+plt.ylabel('Stvarno')
 plt.show()
