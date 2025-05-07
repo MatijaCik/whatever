@@ -1,0 +1,72 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Data.SqlClient;
+
+namespace Baze_LV6_predlozak
+{
+public partial class Form1 : Form
+{
+public Form1()
+{
+InitializeComponent();
+}
+
+private void btnSve_Click(object sender, EventArgs e)
+{
+// OVDJE SLIJEDI PRIMJER IZ PREDLOŠKA:
+SqlConnection conn = new SqlConnection("Data Source = 31.147.207.14; Initial Catalog = stuslu; " +
+"User ID = student; Password = student");
+conn.Open();
+string statement = "SELECT * FROM student";
+SqlDataAdapter dataAdapter = new SqlDataAdapter(statement, conn);
+DataTable dt = new DataTable();
+dataAdapter.Fill(dt);
+dgvPodaci.DataSource = dt;
+conn.Close();
+}
+
+
+private void btnTrazi_Click(object sender, EventArgs e)
+{
+string ime = txtIme.Text.Trim().Replace("'", "''"); // zaštita od apostrofa
+string prezime = txtPrezime.Text.Trim().Replace("'", "''");
+string spol = rbM.Checked ? "M" : rbZ.Checked ? "F" : "";
+
+SqlConnection conn = new SqlConnection("Data Source=31.147.207.14;Initial Catalog=stuslu;" +
+"User ID=student;Password=student");
+conn.Open();
+
+string statement = "SELECT * FROM student WHERE 1=1";
+
+if (!string.IsNullOrEmpty(ime))
+{
+statement += $" AND ime LIKE '%{ime}%'";
+}
+
+if (!string.IsNullOrEmpty(prezime))
+{
+statement += $" AND prezime LIKE '%{prezime}%'";
+}
+
+if (!string.IsNullOrEmpty(spol))
+{
+statement += $" AND spol = '{spol}'";
+}
+
+SqlDataAdapter dataAdapter = new SqlDataAdapter(statement, conn);
+DataTable dt = new DataTable();
+dataAdapter.Fill(dt);
+
+dgvPodaci.DataSource = dt;
+
+conn.Close();
+}
+}
+}
