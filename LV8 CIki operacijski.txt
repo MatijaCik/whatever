@@ -1,0 +1,255 @@
+1. Na dnu je dan primjer višenitnog programa implementiranog u programskom jeziku C,
+u kojem jedna nit izvodi funkciju firstFunction, a druga nit funkciju secondFunction.
+Prva funkcija povećava vrijednost varijable1, a smanjuje vrijednost varijable2, dok
+druga nit radi obrnuto. Ukoliko vrijednost varijable1 postane veća od vrijednosti
+varijable2, može se izvoditi samo druga nit. Također, ako vrijednost varijable2 postane
+veća od vrijednosti varijable1, može se izvoditi samo prva nit. Vaš zadatak je dovršiti
+programski kod tako da omogućite sinkronizaciju među nitima koristeći mutekse i
+uvjetne varijable iz biblioteke pthreads. Kopirajte programski kod i objasnite svoje
+rješenje. Kod kompajliranja dodajte opciju -lm zbog matematičke biblioteke.
+
+nano zad1.c
+
+
+#include <stdio.h>
+#include <pthread.h>
+#include <math.h>
+#include <stdlib.h>  // za abs
+#include <unistd.h>  // za sleep
+
+float variable1 = 10;
+float variable2 = 9;
+
+pthread_mutex_t mutex;
+pthread_cond_t cond;
+
+void *firstFunction() {
+    while (1) {
+        pthread_mutex_lock(&mutex);
+        while (variable1 > variable2) {
+            pthread_cond_wait(&cond, &mutex);
+        }
+
+        variable1 = 3 * variable1 * variable1 + 4 * variable1 - 3;
+        variable2 = sqrt(fabs(variable2)) - 4;
+        printf("Thread1: %.2f %.2f\n", variable1, variable2);
+
+        pthread_cond_signal(&cond);
+        pthread_mutex_unlock(&mutex);
+        sleep(1);
+    }
+    pthread_exit(0);
+}
+
+void *secondFunction() {
+    while (1) {
+        pthread_mutex_lock(&mutex);
+        while (variable2 > variable1) {
+            pthread_cond_wait(&cond, &mutex);
+        }
+
+        variable1 = sqrt(fabs(variable1)) - 4;
+        variable2 = 3 * variable2 * variable2 + 4 * variable2 - 3;
+        printf("Thread2: %.2f %.2f\n", variable1, variable2);
+
+        pthread_cond_signal(&cond);
+        pthread_mutex_unlock(&mutex);
+        sleep(1);
+    }
+    pthread_exit(0);
+}
+
+int main(void) {
+    pthread_t thread1, thread2;
+
+    pthread_mutex_init(&mutex, NULL);
+    pthread_cond_init(&cond, NULL);
+
+    pthread_create(&thread1, NULL, firstFunction, NULL);
+    pthread_create(&thread2, NULL, secondFunction, NULL);
+    pthread_join(thread1, NULL);
+    pthread_join(thread2, NULL);
+
+    pthread_mutex_destroy(&mutex);
+    pthread_cond_destroy(&cond);
+
+    return 0;
+}
+
+
+gcc zad1.c -o zad1 -lpthread -lm
+ ./zad1
+Thread2: -0.84 276.00
+Thread1: -4.25 12.61
+Thread1: 34.09 -0.45
+Thread2: 1.84 -4.19
+Thread2: -2.64 32.92
+Thread1: 7.40 1.74
+Thread2: -1.28 13.01
+Thread1: -3.20 -0.39
+Thread1: 14.97 -3.37
+Thread2: -0.13 17.64
+Thread1: -3.47 0.20
+Thread1: 19.31 -3.55
+Thread2: 0.39 20.67
+Thread1: -0.96 0.55
+Thread1: -4.08 -3.26
+Thread1: 30.55 -2.19
+Thread2: 1.53 2.67
+
+
+
+2. U programskom kodu iz zadatka 1 zamijenite sinkronizaciju pomoću muteksa i
+uvjetnih varijabli sa sinkronizacijom pomoću semafora.
+
+nano zad2.c
+
+
+#include <stdio.h>
+#include <pthread.h>
+#include <math.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <semaphore.h>
+
+float variable1 = 10;
+float variable2 = 9;
+
+sem_t semFirst;
+sem_t semSecond;
+
+void *firstFunction() {
+    while (1) {
+        sem_wait(&semFirst);
+
+        if (variable2 >= variable1) {
+            variable1 = 3 * variable1 * variable1 + 4 * variable1 - 3;
+            variable2 = sqrt(fabs(variable2)) - 4;
+            printf("Thread1: %.2f %.2f\n", variable1, variable2);
+        }
+
+        sem_post(&semSecond);
+        sleep(1);
+    }
+    pthread_exit(0);
+}
+
+void *secondFunction() {
+    while (1) {
+        sem_wait(&semSecond);
+
+        if (variable1 >= variable2) {
+            variable1 = sqrt(fabs(variable1)) - 4;
+            variable2 = 3 * variable2 * variable2 + 4 * variable2 - 3;
+            printf("Thread2: %.2f %.2f\n", variable1, variable2);
+        }
+
+        sem_post(&semFirst);
+        sleep(1);
+    }
+    pthread_exit(0);
+}
+
+int main(void) {
+    pthread_t thread1, thread2;
+
+    sem_init(&semFirst, 0, 1);  // Prva nit kreće
+    sem_init(&semSecond, 0, 0); // Druga čeka
+
+    pthread_create(&thread1, NULL, firstFunction, NULL);
+    pthread_create(&thread2, NULL, secondFunction, NULL);
+    pthread_join(thread1, NULL);
+    pthread_join(thread2, NULL);
+
+    sem_destroy(&semFirst);
+    sem_destroy(&semSecond);
+
+    return 0;
+}
+
+gcc zad2.c -o zad2 -lpthread -lm
+./zad2
+Thread2: -0.84 276.00
+Thread1: -4.25 12.61
+Thread1: 34.09 -0.45
+Thread2: 1.84 -4.19
+Thread2: -2.64 32.92
+Thread1: 7.40 1.74
+Thread2: -1.28 13.01
+Thread1: -3.20 -0.39
+Thread1: 14.97 -3.37
+Thread2: -0.13 17.64
+
+
+
+3. Zadan je sustav sa 4 resursa čiji je broj instanci definiran vektorom E = [6 5 8 7].
+Pretpostavimo da je u memoriji u nekom trenutku 4 procesa (A, B, C, D) sa sljedećom
+tablicom alociranih resursa C te tablicom potrebnih resursa R.
+𝐂 = (
+𝐴 1 1 1 1
+𝐵 2 0 1 3
+𝐶 2 3 4 1
+𝐷 0 0 2 0
+) 𝐑 = (
+𝐴 1 0 0 2
+𝐵 2 1 1 2
+𝐶 3 2 3 5
+𝐷 2 2 2 2
+)
+Potrebno je provjeriti mogu li se procesi izvršiti (je li sustav rješiv) ili će doći do zastoja.
+Koristite Bankarev algoritam. Zadatke riješite ručno, a korake rješenja skicirajte i
+opišite u zadaći na Loomenu. 
+
+
+Zbrojiti sve od C
+
+A  1 1 1 1
+B  2 0 1 3
+C  2 3 4 1
+D  0 0 2 0
+__________
+=  5 4 8 5
+
+Rezultat oduzeti od E
+
+  6 5 8 7
+- 5 4 8 5
+_________
+= 1 1 0 2
+
+Redak koji se može izvršiti: (A)
+
+  1 1 0 2
++ 1 1 1 1
+_________
+= 2 2 1 3
+Izvršen A
+
+(B)
+
+  2 2 1 3
++ 2 0 1 3
+_________
+= 4 2 2 6
+
+Izvršen B
+
+(D)
+
+  4 2 2 6
++ 0 0 2 0
+_________
+= 4 2 4 6
+
+Izvršen D
+
+(C)
+
+  4 2 4 6
++ 2 3 4 1
+_________
+= 6 5 8 7
+
+Izvršen C
+
+Neće doći do zastoja jer je rezultat jednak vektoru E (sustav je rješiv).

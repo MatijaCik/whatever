@@ -1,0 +1,200 @@
+1. Na dnu je dan primjer višenitnog programa implementiranog u programskom jeziku C,
+u kojem jedna nit izvodi funkciju firstFunction, a druga nit funkciju secondFunction.
+Prva funkcija povećava vrijednost varijable1, a smanjuje vrijednost varijable2, dok
+druga nit radi obrnuto. Ukoliko vrijednost varijable1 postane veća od vrijednosti
+varijable2, može se izvoditi samo druga nit. Također, ako vrijednost varijable2 postane
+veća od vrijednosti varijable1, može se izvoditi samo prva nit. Vaš zadatak je dovršiti
+programski kod tako da omogućite sinkronizaciju među nitima koristeći mutekse i
+uvjetne varijable iz biblioteke pthreads. Kopirajte programski kod i objasnite svoje
+rješenje. Kod kompajliranja dodajte opciju -lm zbog matematičke biblioteke. 
+
+#include <stdio.h>
+#include <pthread.h>
+#include <math.h>
+#include <stdlib.h>
+
+float variable1 = 10;
+float variable2 = 9;
+
+pthread_mutex_t mutex;
+pthread_cond_t condFirst, condSecond;
+
+void* firstFunction() {
+	while (1) {
+
+		pthread_mutex_lock(&mutex);
+		while (variable1>=variable2) {
+			pthread_cond_wait(&condFirst, &mutex);
+		}
+
+		//Radi samo ako je variable2>=variable1
+
+		variable1 = 3 * variable1 * variable1 + 4 * variable1 - 3;
+		variable2 = sqrt(abs(variable2)) - 4;
+		printf("Thread1: %.2f %.2f\n", variable1, variable2);
+		
+		pthread_cond_signal(&condSecond);
+		pthread_mutex_unlock(&mutex);
+
+		//Obavijesti drugu nit ako je variable1>=variable2
+	}
+	pthread_exit(0);
+}
+
+void* secondFunction() {
+	while (1) {
+
+		pthread_mutex_lock(&mutex);
+		while (variable2 >= variable1) {
+			pthread_cond_wait(&condSecond, &mutex);
+		}
+		//Radi samo ako je variable1>=variable2
+
+		variable1 = sqrt(abs(variable1)) - 4;
+		variable2 = 3 * variable2 * variable2 + 4 * variable2 - 3;
+		printf("Thread2: %.2f %.2f\n", variable1, variable2);
+		
+		pthread_cond_signal(&condFirst);
+		pthread_mutex_unlock(&mutex);
+
+		//Obavijesti prvu nit ako je variable2>=variable1
+	}
+	pthread_exit(0);
+}
+
+int main(void) {
+
+	pthread_mutex_init(&mutex, 0);
+	pthread_cond_init(&condFirst, 0);
+	pthread_cond_init(&condSecond, 0);
+	
+	pthread_t thread1, thread2;
+	pthread_create(&thread1, NULL, firstFunction, NULL);
+	pthread_create(&thread2, NULL, secondFunction, NULL);
+	pthread_join(thread1, NULL);
+	pthread_join(thread2, NULL);
+
+	pthread_cond_destroy(&condFirst);
+	pthread_cond_destroy(&condSecond);
+	pthread_mutex_destroy(&mutex);
+	return 0;
+}
+
+2. U programskom kodu iz zadatka 1 zamijenite sinkronizaciju pomoću muteksa i
+uvjetnih varijabli sa sinkronizacijom pomoću semafora. 
+
+#include <stdio.h>
+#include <pthread.h>
+#include <math.h>
+#include <semaphore.h>
+#include <stdlib.h>
+
+float variable1 = 9;
+float variable2 = 10;
+
+sem_t mutex;
+sem_t empty; 
+sem_t full;
+
+void* firstFunction() {
+	while (1) {
+	    
+	    if(variable1>=variable2){
+	        sem_wait(&mutex);
+	    }
+		//Radi samo ako je variable2>=variable1
+
+		variable1 = 3 * variable1 * variable1 + 4 * variable1 - 3;
+		variable2 = sqrt(abs(variable2)) - 4;
+		printf("Thread1: %.2f %.2f\n", variable1, variable2);
+		
+		sem_post(&mutex);
+		
+		//Obavijesti drugu nit ako je variable1>=variable2
+	}
+	pthread_exit(0);
+}
+void* secondFunction() {
+	while (1) {
+	    if(variable2>=variable1){
+	        sem_wait(&mutex);
+	    }
+		//Radi samo ako je variable1>=variable2
+		
+		variable1 = sqrt(abs(variable1)) - 4;
+		variable2 = 3 * variable2 * variable2 + 4 * variable2 - 3;
+		printf("Thread2: %.2f %.2f\n", variable1, variable2);
+		
+		sem_post(&mutex);
+		
+		//Obavijesti prvu nit ako je variable2>=variable1
+	}
+	pthread_exit(0);
+}
+int main(void) {
+    sem_init(&mutex, 1, 1);
+    
+	pthread_t thread1, thread2;
+	pthread_create(&thread1, NULL, firstFunction, NULL);
+	pthread_create(&thread2, NULL, secondFunction, NULL);
+	pthread_join(thread1, NULL);
+	pthread_join(thread2, NULL);
+	return 0;
+}
+
+3. Zadan je sustav sa 4 resursa čiji je broj instanci definiran vektorom E = [6 5 8 7].
+Pretpostavimo da je u memoriji u nekom trenutku 4 procesa (A, B, C, D) sa sljedećom
+tablicom alociranih resursa C te tablicom potrebnih resursa R. 
+
+Zbrojiti sve od C
+
+A  1 1 1 1
+B  2 0 1 3
+C  2 3 4 1
+D  0 0 2 0
+__________
+=  5 4 8 5
+
+Rezultat oduzeti od E
+
+  6 5 8 7
+- 5 4 8 5
+_________
+= 1 1 0 2
+
+Redak koji se može izvršiti: (A)
+
+  1 1 0 2
++ 1 1 1 1
+_________
+= 2 2 1 3
+Izvršen A
+
+(B)
+
+  2 2 1 3
++ 2 0 1 3
+_________
+= 4 2 2 6
+
+Izvršen B
+
+(D)
+
+  4 2 2 6
++ 0 0 2 0
+_________
+= 4 2 4 6
+
+Izvršen D
+
+(C)
+
+  4 2 4 6
++ 2 3 4 1
+_________
+= 6 5 8 7
+
+Izvršen C
+
+Neće doći do zastoja jer je rezultat jednak vektoru E (sustav je rješiv).
