@@ -1,0 +1,62 @@
+/* a) Uređivanje tablice */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center; /* centriranje teksta */
+}
+
+/* promjena boje zaglavlja */
+table thead {
+  background-color: #0d6efd; /* Bootstrap plava */
+  color: white;
+}
+
+/* razlikovanje parnih i neparnih redaka */
+table tbody tr:nth-of-type(even) {
+  background-color: #f2f2f2;
+}
+
+/* dodatna promjena po izboru – efekat prelaska mišem */
+table tbody tr:hover {
+  background-color: #dcecff;
+  transform: scale(1.01);
+  transition: 0.2s;
+}
+
+/* b) Promjena prvog odlomka pomoću pseudoklase */
+p:first-of-type {
+  color: red;
+  font-size: 1.3em;
+  font-weight: bold;
+}
+
+/* c) Razmak između slika na manjim ekranima */
+@media (max-width: 768px) {
+  img {
+    margin-bottom: 10px;
+  }
+}
+
+/* d) Dodatni element na dnu – primjer za alert ili footer može se uređivati ovako */
+.alert {
+  font-size: 1.1em;
+  border-radius: 10px;
+}
+
+/* e) Mix and Match primjer – jednostavna mreža (primjer iz w3schools, ali s bojama) */
+.mix-example .col {
+  padding: 15px;
+  color: white;
+}
+
+.mix-example .col-6 {
+  background-color: #198754; /* Bootstrap zelena */
+}
+
+.mix-example .col-3 {
+  background-color: #0dcaf0; /* Bootstrap plava */
+}
+
+.mix-example .col-12 {
+  background-color: #6f42c1; /* ljubičasta */
+}
