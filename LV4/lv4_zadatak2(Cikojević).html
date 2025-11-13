@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Validacija</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="css.css">
+</head>
+<body>
+    <h1>Validacija</h1>
+
+    <form>
+        Ime i prezime: <input type="text" id="ime"><br><br>
+
+        Tekstualno područje:<br>
+        <textarea id="prezime" cols="50" rows="10"></textarea><br><br>
+
+        Unesi broj:
+        <input type="text" id="broj" required pattern="^([1-9]|10)$" title="Unesite broj između 1 i 10">
+        <i class="fas fa-info-circle" title="Uneseni broj mora biti između 1 i 10"></i>
+        <button type="button" onclick="kvadriraj()">Kvadriraj</button><br><br>
+
+        <div id="rezultat"></div><br>
+
+        <button type="button" ondblclick="pozdrav()">Pozdrav</button>
+        <button type="button" onmouseup="kolegiji()">Kolegiji</button>
+        <button type="button" onmouseover="obriši()">Obriši</button><br><br>
+
+        E-mail: <input type="text" id="email"><br><br>
+        <button type="button" onclick="provjeri()">Provjeri!</button>
+    </form>
+
+<script src="script.js"></script>
+</body>
+</html>
