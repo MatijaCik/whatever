@@ -1,0 +1,65 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) session_start();
+require_once "connect.php";
+
+$user_id = $_SESSION['id'];
+$msg = "";
+
+if(isset($_POST['submit'])) {
+    $naziv = $_POST['naziv'];
+    $kalorije = intval($_POST['kalorije']);
+    $proteini = floatval($_POST['proteini']);
+    $ugljikohidrati = floatval($_POST['ugljikohidrati']);
+    $masti = floatval($_POST['masti']);
+    $datum = date('Y-m-d');
+
+    $stmt = $conn->prepare("INSERT INTO korisnicka_hrana (korisnik_id, naziv, kalorije, proteini, ugljikohidrati, masti, datum) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("isiddds", $user_id, $naziv, $kalorije, $proteini, $ugljikohidrati, $masti, $datum);
+    if($stmt->execute()) {
+        $msg = "Hrana dodana!";
+    } else {
+        $msg = "Greška prilikom dodavanja hrane.";
+    }
+    $stmt->close();
+}
+
+// Dohvati sve unose korisnika za danas
+$sql = $conn->prepare("SELECT * FROM korisnicka_hrana WHERE korisnik_id = ? AND datum = ? ORDER BY id DESC");
+$today = date('Y-m-d');
+$sql->bind_param("is", $user_id, $today);
+$sql->execute();
+$result = $sql->get_result();
+?>
+
+<h3>Unos Hrane</h3>
+<?php if($msg): ?><div class="alert alert-info"><?= $msg ?></div><?php endif; ?>
+<form method="POST">
+  <div class="mb-3">
+    <label class="form-label">Naziv hrane</label>
+    <input type="text" name="naziv" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Kalorije</label>
+    <input type="number" name="kalorije" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Proteini (g)</label>
+    <input type="number" step="0.1" name="proteini" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Ugljikohidrati (g)</label>
+    <input type="number" step="0.1" name="ugljikohidrati" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Masti (g)</label>
+    <input type="number" step="0.1" name="masti" class="form-control" required>
+  </div>
+  <button type="submit" name="submit" class="btn btn-primary">Dodaj hranu</button>
+</form>
+
+<h4 class="mt-4">Unosi za danas</h4>
+<ul>
+  <?php while($row = $result->fetch_assoc()): ?>
+    <li><?= htmlspecialchars($row['naziv']) ?> - <?= $row['kalorije'] ?> kcal</li>
+  <?php endwhile; ?>
+</ul>
